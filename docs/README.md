@@ -497,7 +497,7 @@ Selalu gunakan versio dio terbaru pada url [Dio](https://pub.dev/packages/dio)
 - **Interface dan Implementasi**
     - Gunakan interface (abstract class) sebagai kontrak
     - Gunakan class implementasi untuk logic sebenarnya
-    - Memudahkan testing dan dependency injection\
+    - Memudahkan testing dan dependency injection
 
     **Contoh Implementasi**
     **Interface**
@@ -515,8 +515,213 @@ Selalu gunakan versio dio terbaru pada url [Dio](https://pub.dev/packages/dio)
         TrayekRepositoryImpl(this.dio) : baseUrl = "${BaseUrl.parent}${ApiUrl.managementV2}";
 
         @override
-        Future<Either<ApiFailure, Trayek>> getTrayekAsync(String id) async {}
-    }
+        Future<Either<ApiFailure, Trayek>> getTrayekAsync(String id) async {
+            String url = "${baseUrl}Trayeks/$id/Preview";
+                try {
+                    final response = await dio.get(
+                        url,
+                        options: Options(
+                        headers: {
+                            "Authorization" : "Token ${CurrentUser.token}"
+                        }
+                        )
+                    );
+
+                    var result = TrayekReadDto.fromJson(response.data).toEntity();
+                    return Right(result);
+                } on DioException catch (e) {
+                    return Left(ApiFailure(type: e.type, statusCode: e.response?.statusCode ?? 0, response: e.response));
+                } catch (e) {
+                return Left(ApiFailure(statusCode: 400));
+                }
+            }
+        }
     ```
 
-    # Environtment (Flutter Flavor)
+# Environment Configuration (Flutter Flavor)
+Untuk pengelolaan environment (seperti **development, staging, dan production**), proyek ini menggunakan package [flutter_flavor](http://pub.dev/packages/flutter_flavor) sebagai standar utama.
+Penggunaan Flutter Flavor bertujuan untuk memisahkan konfigurasi aplikasi berdasarkan environment, sehingga memudahkan pengelolaan URL API, konfigurasi aplikasi, serta proses build dan deployment.\
+**Tujuan Penggunaan Flavor**
+- Memisahkan konfigurasi berdasarkan environment
+- Menghindari perubahan manual pada kode saat berpindah environment
+- Meminimalisir risiko kesalahan (misalnya penggunaan API production di development)
+- Mendukung proses build yang lebih terstruktur
+**Standar Environment**
+- Development (dev) → digunakan untuk proses development
+- Production (prod) → digunakan untuk aplikasi yang dirilis ke user
+**Contoh Konfigurasi**
+- Konfigurasi base untuk `flavor_config`
+``` dart
+class FlavorConfig {
+    final String flavor;
+    final String urlSuperApps;
+    final ThemeMode theme;
+
+    static late FlavorConfig _instance;
+
+    factory FlavorConfig({
+    required String flavor,
+    required String urlSuperApps,
+    required ThemeMode theme
+    }) {
+    _instance = FlavorConfig._internal(flavor, urlSuperApps, theme);
+    return _instance;
+    }
+
+    FlavorConfig._internal(this.flavor, this.urlSuperApps, this.theme);
+
+    static FlavorConfig get instance => _instance;
+}
+```
+- Contoh penggunaan pada `main_dev`
+``` dart
+void main() async {
+    FlavorConfig(
+        flavor: "development",
+        urlSuperApps: "https://dev-api.harapan-jaya.com/",
+        theme: ThemeType.Dark
+    );
+    runApp(const MyApp());
+}
+```
+- Contoh penggunaan pada `main_prod`
+``` dart
+void main() async {
+    FlavorConfig(
+        flavor: "production",
+        urlSuperApps: "https://api.harapan-jaya.com/",
+        theme: ThemeType.Dark
+    );
+    runApp(const MyApp());
+}
+```
+- Contoh pemanggilan variable
+``` dart
+static String parent = FlavorConfig.instance.urlSuperApps;
+```
+- Pengaturan tambahan pada build gradle supaya memudahkan dalam build apk ataupun appbundle
+``` java
+flavorDimensions "default"
+productFlavors {
+    development {
+        dimension "default"
+        applicationIdSuffix ".dev"
+        versionNameSuffix "-dev"
+        resValue "string", "app_name", "(dev) Harapan Jaya Prima"
+    }
+
+    production {
+        dimension "default"
+        resValue "string", "app_name", "Harapan Jaya Prima"
+    }
+}
+```
+- Pengaturan tambahan jika menggunakan vscode, pada bagian `launch.json`
+``` json
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Flutter Dev",
+        "request": "launch",
+        "type": "dart",
+        "program": "lib/main_dev.dart",
+        "toolArgs": [
+          "--flavor",
+          "development"
+        ],
+        "args": [
+          "--flavor",
+          "development"
+        ]
+      },
+      {
+        "name": "Flutter Prod",
+        "request": "launch",
+        "type": "dart",
+        "program": "lib/main_prod.dart",
+        "toolArgs": [
+          "--flavor",
+          "production"
+        ],
+        "args": [
+          "--flavor",
+          "production"
+        ]
+      }
+    ]
+  }
+```
+
+# Controller
+Pada layer Controller, developer diperbolehkan menggunakan state management apapun seperti **GetX, Bloc**, atau **lainnya**. Namun, untuk menjaga konsistensi dan kualitas kode, terdapat standar dalam penulisan controller yang harus diikuti. Pada dokumentasi ini, contoh implementasi menggunakan **GetX**.
+
+**Prinsip Umum**\
+Controller berfungsi sebagai penghubung antara Presentation dan Application/Domain, serta bertanggung jawab dalam mengelola state dan alur data.\
+`Controller hanya berisi logic, dan tidak boleh menangani hal-hal yang berkaitan langsung dengan UI.`
+
+**Standar Penulisan Controller**
+- **Menggunakan Interface Repository**
+    - Controller harus bergantung pada interface (abstraction), bukan implementasi langsung
+    - Bertujuan untuk menjaga loose coupling dan memudahkan testing
+
+    Contoh yang kurang tepat ❌
+    ``` dart
+    var checkout = await CheckoutRepository().checkoutAsync(body) // ❌ Tidak diperbolehkan
+    ```
+    Contoh yang tepat ✅
+    ``` dart
+    class TrayekController extends GetxController {
+        final TrayekRepository _trayekRepository;
+
+        TrayekController(this._trayekRepository);
+
+        void _getTrayekAsync(String id) async {
+            var trayek = await _trayekRepository.getTrayekAsync(id);
+            trayek.match((failure) {
+                //handle success
+            }, (trayek) {
+                //handle failed
+            });
+        }
+    }
+    ```
+- **Tidak Mengandung Logic UI**
+    - Tidak boleh Melakukan navigasi (contoh: `Get.back()`, `Get.to()`)
+    - Tidak Menampilkan dialog (contoh: dialog error, loading, dll)
+    - Tidak boleh menampilkan snackbar
+    **Semua hal terkait UI harus ditangani di layer Presentation.**\
+    Contoh yang kurang tepat ❌
+    ``` dart
+    Future<void> submitOrder() async {
+        final result = await _repository.createOrder();
+
+        result.fold(
+            (error) {
+                Get.snackbar('Error', error); // ❌ Tidak diperbolehkan
+            },
+            (data) {
+                Get.back(); // ❌ Tidak diperbolehkan
+            },
+        );
+    }
+    ```
+    Contoh yang tepat ✅\
+    **Controller:**
+    ``` dart
+    Future<Either<String, OrderDto>> submitOrder() async {
+        return await _repository.createOrder();
+    }
+    ```
+    **Presentation (UI):**
+    ``` dart
+    final result = await controller.submitOrder();
+    result.fold(
+        (error) {
+            Get.snackbar('Error', error); // ✅ di UI layer
+        },
+        (data) {
+            Get.back(); // ✅ di UI layer
+        },
+    );
+    ```

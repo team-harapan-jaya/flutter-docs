@@ -537,6 +537,77 @@ Selalu gunakan versio dio terbaru pada url [Dio](https://pub.dev/packages/dio)
             }
         }
     ```
+- ## HTTP GET
+    - Query parameter tidak boleh ditulis langsung di URL
+    - Gunakan parameter `queryParameters` yang disediakan oleh Dio
+    - Bertujuan agar URL tetap bersih dan mudah dibaca
+    ``` dart
+    final response = await dio.get(
+        '/orders',
+        queryParameters: {
+            'pageNumber': 1,
+            'pageSize': 10,
+        },
+    );
+    ```
+- ## HTTP POST
+    - Body tidak boleh menggunakan `dynamic`
+    - Wajib menggunakan class (DTO), baik dari Freezed maupun class biasa
+    - Wajib menggunakan Content-Type: application/json
+    ``` dart
+    final request = CreateOrderDto(
+        name: 'Order 1',
+        quantity: 2,
+    );
+    final response = await dio.post(
+        '/orders',
+        data: request.toJson(),
+        options: Options(
+            contentType: Headers.jsonContentType,
+        ),
+    );
+    ```
+- ## HTTP PUT
+    - Body tidak boleh menggunakan `dynamic`
+    - Wajib menggunakan class (DTO), baik dari Freezed maupun class biasa
+    - Wajib menggunakan Content-Type: application/json
+    ``` dart
+    final request = CreateOrderDto(
+        name: 'Order 1',
+        quantity: 2,
+    );
+    final response = await dio.put(
+        '/orders/1',
+        data: request.toJson(),
+        options: Options(
+            contentType: Headers.jsonContentType,
+        ),
+    );
+    ```
+- ## HTTP PATCH
+    - Body tidak boleh menggunakan `dynamic`
+    - Wajib menggunakan class (DTO), baik dari Freezed maupun class biasa
+    - Wajib menggunakan Content-Type: application/json
+    ``` dart
+    final request = UpdateOrderStatusDto(
+        status: 'paid',
+    );
+    final response = await dio.put(
+        '/orders/1/Status',
+        data: request.toJson(),
+        options: Options(
+            contentType: Headers.jsonContentType,
+        ),
+    );
+    ```
+- ## ⚠️ WARNING ⚠️
+Setiap request dan response wajib memiliki model yang jelas (DTO).\
+Tidak diperbolehkan menggunakan ❌`Map<String, dynamic>`❌ secara langsung dalam proses komunikasi data, terutama di luar layer Infrastructure.\
+Penggunaan DTO bertujuan untuk:
+    - Menjaga struktur data tetap konsisten
+    - Menghindari kesalahan parsing data
+    - Meningkatkan readability dan maintainability kode
+    - Mempermudah proses debugging dan refactoring
 
 # **Environment Configuration (Flutter Flavor)**
 Untuk pengelolaan environment (seperti **development, staging, dan production**), proyek ini menggunakan package [flutter_flavor](http://pub.dev/packages/flutter_flavor) sebagai standar utama.

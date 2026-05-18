@@ -1,14 +1,14 @@
-# Harapan Jaya Flutter Docs
+# **Harapan Jaya Flutter Docs**
 
 Dokumen ini berisi standar dan pedoman pengembangan aplikasi Flutter yang digunakan dalam tim, mencakup arsitektur, struktur folder, penamaan kode, serta pengelolaan data. Tujuannya adalah untuk memastikan konsistensi, meningkatkan kualitas kode, serta mempermudah proses pengembangan dan pemeliharaan aplikasi.
 
 
-# Folder Structure
+# **Folder Structure**
 Struktur folder pada proyek Flutter ini mengadopsi konsep Domain-Driven Design (DDD) untuk memisahkan tanggung jawab setiap layer secara jelas dan menjaga kode tetap terorganisir, scalable, serta mudah untuk dikembangkan. Struktur utama terdiri dari empat layer utama, yaitu:
 
 **Application, Domain, Infrastructure, dan Presentation**
 
-- **Application Layer**\
+- ## Application Layer
   **Application** bertanggung jawab untuk mengatur alur bisnis aplikasi (business flow) tanpa berisi logic inti domain.\
     Beberapa tanggung jawab utama:
     - Meng-handle use case atau fitur aplikasi
@@ -16,7 +16,7 @@ Struktur folder pada proyek Flutter ini mengadopsi konsep Domain-Driven Design (
     - Mengelola state (misalnya menggunakan Bloc, Cubit, atau state management lainnya)
     - Berisi DTO (Data Transfer Object) jika diperlukan
 
-- **Domain Layer**\
+- ## Domain Layer
   **Domain** merupakan inti dari aplikasi yang berisi business logic utama.\
     Beberapa isi dari layer ini:
     - Entity
@@ -24,57 +24,57 @@ Struktur folder pada proyek Flutter ini mengadopsi konsep Domain-Driven Design (
     - Enum
     - Business rules / logic utama
 
-- **Infrastructure Layer**\
+- ## Infrastructure Layer
   **Infrastructure** berisi implementasi dari hal-hal teknis yang dibutuhkan oleh aplikasi.
     - Implementasi Repository (yang sebelumnya didefinisikan di Domain)
     - Data source (API, database lokal seperti SQLite, dll)
     - Konfigurasi network (misalnya Dio)
     - Service eksternal
 
-- **Presentation Layer**\
+- ## Presentation Layer
   **Presentation** bertanggung jawab untuk tampilan (UI) dan interaksi dengan user.\
     Beberapa isi dari layer ini.
     - Halaman (pages / screens)
     - Widget
     - State management (controller)
 
-# Naming Conventions
+# **Naming Conventions**
 Standarisasi penamaan digunakan untuk menjaga konsistensi kode, meningkatkan readability, serta mempermudah kolaborasi dalam tim. Aturan ini mencakup penamaan class, enum, page,
 widget, dan interface.
-- **Class dan Enum**\
+- ## Class dan Enum
     Gunakan PascalCase untuk penamaan class dan enum Nama harus merepresentasikan tujuan atau fungsi dengan jelas
     ``` dart
     class User {}
     enum PaymentStatus {}
     ```
-- **Class dan Enum**\
+- ## Pages
     Gunakan suffix Page untuk setiap halaman dan Gunakan PascalCase\
     Page harus berupa turunan dari StatelessWidget atau StatefulWidget
     ``` dart
     class HomePage extends StatelessWidget {}
     class CameraListenerPage extends StatefulWidget {}
     ```
-- **Widget berbasis Class**\
+- ## Widget berbasis Class
     Gunakan suffix Widget dan Gunakan PascalCase\
     Digunakan untuk reusable component atau widget kompleks
     ``` dart
     class ProfileWidget extends StatelessWidget {}
     ```
-- **Widget berbasis Function**\
+- ## Widget berbasis Function
     Gunakan camelCase dan Digunakan untuk widget sederhana atau bagian kecil dari UI
     ``` dart
     Widget profileWidget() {
         return const SizedBox();
     }
     ```
-- **Interface Abstract Class**\
+- ## Interface Abstract Class
     Gunakan PascalCase dan Tidak perlu menggunakan prefix
     `I`\
     Gunakan kata yang merepresentasikan kontrak/service
     ``` dart
     abstract class ProfileService {}
     ```
-- **Implementasi Interface**\
+- ## Implementasi Interface
     Gunakan suffix
     `Impl`
     dan untuk class implementasi Gunakan PascalCase
@@ -82,7 +82,7 @@ widget, dan interface.
     class ProfileServiceImpl extends ProfileService {}
     ```
 
-# Json Serialization (Dto)
+# **Json Serialization (Dto)**
 Untuk proses serialisasi dan deserialisasi JSON, proyek ini menggunakan library
 **Freezed**
 sebagai standar utama.\
@@ -90,33 +90,33 @@ DTO (Data Transfer Object) digunakan untuk merepresentasikan response dari API,\
 dengan aturan utama: `Tipe data pada DTO harus sesuai dengan tipe data dari API.`
 Tidak diperbolehkan mengubah tipe data (misalnya: API mengirim DateTime, tetapi di Flutter
 menggunakan String).
-- **Integer**
+- ## Integer
     - Tidak menggunakan nullable
     - Wajib memiliki default value 0
     - Digunakan untuk angka kecil seperti: jumlah pesanan, quantity
     ``` dart
     @JsonKey(name: 'quantity') @Default(0) int quantity
     ```
-- **Double**
+- ## Double
     - Tidak menggunakan nullable
     - Wajib memiliki default value 0
     - Digunakan untuk angka besar seperti harga, total pembayaran
     ``` dart
     @JsonKey(name: 'price') @Default(0) double price
     ``` 
-- **Boolean**
+- ## Boolean
     - Tidak menggunakan nullable
     - Wajib memiliki default value false
     ``` dart
     @JsonKey(name: 'isActive') @Default(false) bool isActive
     ``` 
-- **DateTime**
+- ## DateTime
     - Gunakan tipe DateTime untuk data tanggal dari API
     - Tidak diperbolehkan menggunakan String untuk representasi tanggal
     ``` dart
     @JsonKey(name: 'createdAt') DateTime? createdAt
     ``` 
-- **Enum**
+- ## Enum
     - Gunakan enum untuk data status yang berasal dari API (biasanya dalam bentuk String)
     - Wajib membuat converter sendiri untuk mapping dari String ke Enum\
     Contoh class `enum`
@@ -145,7 +145,7 @@ menggunakan String).
      ``` dart
     @JsonKey(name: 'status', fromJson: _paymentStatusFromJson) @Default(PaymentStatus.unpaid) PaymentStatus paymentStatus,
     ```
-- **Object**
+- ## Object
     - Gunakan class dari freezed
     - Buat nullable jika memang null
     - Buat dengan default value jika tidak null\
@@ -157,14 +157,14 @@ menggunakan String).
     ``` dart
     @JsonKey(name: 'type') @Default(VoucherDetailPropertyTypeReadDto()) VoucherDetailPropertyTypeReadDto type
     ``` 
-- **List**
+- ## List
     - Gunakan class dari freezed
     - Wajib dengan default value `[]`
     ``` dart
     @JsonKey(name: 'properties') @Default([]) List<VoucherDetailPropertyReadDto> properties,
     ``` 
 
-# Entity (Opsional tapi sangat disarankan)
+# **Entity (Opsional tapi sangat disarankan)**
 DTO tidak boleh langsung digunakan di layer Presentation (disarankan dimapping ke Domain jika diperlukan),
 Entity bisa didapatkan dari Dto yang di convert menjadi entity\
 Contoh Sederhana Class Entity
@@ -217,12 +217,12 @@ Contoh Penggunaan `toEntity()` :
 final result = MySnackSummaryReadDto.fromJson(response.data);
 return Right(result.toEntity());
 ```
-# API Communication (CRUD)
+# **API Communication (CRUD)**
 Untuk proses Create, Read, Update, dan Delete (CRUD), proyek ini menggunakan library `Dio` sebagai standar utama dalam melakukan komunikasi dengan API.
 Pendekatan yang digunakan bertujuan untuk menjaga konsistensi, mempermudah handling error, serta memastikan kode tetap terstruktur dan mudah di-maintain.\
 Selalu gunakan versio dio terbaru pada url [Dio](https://pub.dev/packages/dio)
 **Standar yang Digunakan**
-- **HTTP Client (Dio)**
+- ## HTTP Client (Dio)
     - Seluruh komunikasi API wajib menggunakan Dio
     - Konfigurasi seperti base URL, header, dan interceptor dikelola secara terpusat
     ``` dart
@@ -245,7 +245,7 @@ Selalu gunakan versio dio terbaru pada url [Dio](https://pub.dev/packages/dio)
         }
     }
     ``` 
-- **HTTP Client Interceptor (Dio Interceptor)**
+- ## HTTP Client Interceptor (Dio Interceptor)
     - Menggunakan `pretty_dio_logger` untuk memudahkan dalam melihat hasil request, `pretty_dio_logger 1.4.0` bisa diambil di url [pretty_dio_logger](https://pub.dev/packages/pretty_dio_logger)
     ``` dart
     dio.interceptors.add(PrettyDioLogger(requestBody: true));
@@ -302,7 +302,7 @@ Selalu gunakan versio dio terbaru pada url [Dio](https://pub.dev/packages/dio)
     ``` dart
     dio.interceptors.add(DioRefreshTokenInterceptor(dio));
     ```
-- **HTTP Client Exception Handler (Dio Interceptor Handler)**
+- ## HTTP Client Exception Handler (Dio Interceptor Handler)
     - Menggunakan custom handler berdasarkan exception yang diberikan oleh Http Response dari Dio, Seperti Bad Request, NotFound dll\
     Contoh Exception Handler :
     ``` dart
@@ -452,7 +452,7 @@ Selalu gunakan versio dio terbaru pada url [Dio](https://pub.dev/packages/dio)
         );
     }
     ```
-- **Pattern Either (Success / Failure)**
+- ## Pattern Either (Success / Failure)
     - Gunakan konsep Either untuk membedakan hasil sukses dan gagal
     - `Left` digunakan untuk error / failure
     - `Right` digunakan untuk success / data
@@ -494,7 +494,7 @@ Selalu gunakan versio dio terbaru pada url [Dio](https://pub.dev/packages/dio)
         //Handle success
     });
     ```
-- **Interface dan Implementasi**
+- ## Interface dan Implementasi
     - Gunakan interface (abstract class) sebagai kontrak
     - Gunakan class implementasi untuk logic sebenarnya
     - Memudahkan testing dan dependency injection
@@ -538,7 +538,7 @@ Selalu gunakan versio dio terbaru pada url [Dio](https://pub.dev/packages/dio)
         }
     ```
 
-# Environment Configuration (Flutter Flavor)
+# **Environment Configuration (Flutter Flavor)**
 Untuk pengelolaan environment (seperti **development, staging, dan production**), proyek ini menggunakan package [flutter_flavor](http://pub.dev/packages/flutter_flavor) sebagai standar utama.
 Penggunaan Flutter Flavor bertujuan untuk memisahkan konfigurasi aplikasi berdasarkan environment, sehingga memudahkan pengelolaan URL API, konfigurasi aplikasi, serta proses build dan deployment.\
 **Tujuan Penggunaan Flavor**
@@ -653,7 +653,7 @@ productFlavors {
   }
 ```
 
-# Controller
+# **Controller**
 Pada layer Controller, developer diperbolehkan menggunakan state management apapun seperti **GetX, Bloc**, atau **lainnya**. Namun, untuk menjaga konsistensi dan kualitas kode, terdapat standar dalam penulisan controller yang harus diikuti. Pada dokumentasi ini, contoh implementasi menggunakan **GetX**.
 
 **Prinsip Umum**\
@@ -661,7 +661,7 @@ Controller berfungsi sebagai penghubung antara Presentation dan Application/Doma
 `Controller hanya berisi logic, dan tidak boleh menangani hal-hal yang berkaitan langsung dengan UI.`
 
 **Standar Penulisan Controller**
-- **Menggunakan Interface Repository**
+- ## Menggunakan Interface Repository
     - Controller harus bergantung pada interface (abstraction), bukan implementasi langsung
     - Bertujuan untuk menjaga loose coupling dan memudahkan testing
 
@@ -679,14 +679,14 @@ Controller berfungsi sebagai penghubung antara Presentation dan Application/Doma
         void _getTrayekAsync(String id) async {
             var trayek = await _trayekRepository.getTrayekAsync(id);
             trayek.match((failure) {
-                //handle success
+                //handle error
             }, (trayek) {
-                //handle failed
+                //handle success
             });
         }
     }
     ```
-- **Tidak Mengandung Logic UI**
+- ## Tidak Mengandung Logic UI
     - Tidak boleh Melakukan navigasi (contoh: `Get.back()`, `Get.to()`)
     - Tidak Menampilkan dialog (contoh: dialog error, loading, dll)
     - Tidak boleh menampilkan snackbar

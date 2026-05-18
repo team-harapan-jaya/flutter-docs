@@ -8,12 +8,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
   <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
 </head>
+<style>
+  #main h2 {
+    font-size: 1.4rem; /* Ukuran bawaan biasanya sekitar 1.75rem - 2rem */
+    margin-top: 1.5rem; /* Mengatur jarak dengan konten di atasnya agar proporsional */
+    margin-bottom: 0.5rem;
+    color: #ffa500;
+  }
+</style>
 <body>
   <div id="app"></div>
   <script>
     window.$docsify = {
       name: '',
-      repo: ''
+      repo: '',
+      loadSidebar: false,
+      maxLevel: 3,                 // Docsify akan mengambil Heading H1 (#), H2 (##), dan H3 (###) dari README.md untuk jadi menu
+      sidebarDisplayLevel: 3,
     }
   </script>
   <!-- Docsify v4 -->

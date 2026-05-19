@@ -717,8 +717,8 @@ Penggunaan Flutter Flavor bertujuan untuk memisahkan konfigurasi aplikasi berdas
                 "type": "dart",
                 "program": "lib/main_dev.dart",
                 "toolArgs": [
-                "--flavor",
-                "development"
+                    "--flavor",
+                    "development"
                 ],
                 "args": [
                     "--flavor",
@@ -731,8 +731,8 @@ Penggunaan Flutter Flavor bertujuan untuk memisahkan konfigurasi aplikasi berdas
                 "type": "dart",
                 "program": "lib/main_prod.dart",
                 "toolArgs": [
-                "--flavor",
-                "production"
+                    "--flavor",
+                    "production"
                 ],
                 "args": [
                     "--flavor",

@@ -661,7 +661,7 @@ Penggunaan Flutter Flavor bertujuan untuk memisahkan konfigurasi aplikasi berdas
         static FlavorConfig get instance => _instance;
     }
     ```
-## Contoh penggunaan pada `main_dev`
+## Contoh penggunaan pada main_dev
     ``` dart
     void main() async {
         FlavorConfig(
@@ -672,7 +672,7 @@ Penggunaan Flutter Flavor bertujuan untuk memisahkan konfigurasi aplikasi berdas
         runApp(const MyApp());
     }
     ```
-## Contoh penggunaan pada `main_prod`
+## Contoh penggunaan pada main_prod
     ``` dart
     void main() async {
         FlavorConfig(
@@ -722,7 +722,7 @@ Penggunaan Flutter Flavor bertujuan untuk memisahkan konfigurasi aplikasi berdas
                 ],
                 "args": [
                     "--flavor",
-                    "development"
+                    "development"   
                 ]
             },
             {
@@ -898,3 +898,267 @@ Tujuan dari pembagian ini:
     ### ⚠️ Catatan Tambahan ⚠️
     Pemisahan controller menjadi beberapa bagian tidak berarti semua controller harus diinisialisasi atau dipanggil di awal.\
     Controller harus hanya digunakan saat dibutuhkan (on-demand) sesuai dengan konteks fitur atau halaman yang sedang aktif.
+
+# **Presentation**
+Pada section ini adalah membahas standarisasi untuk pembuatan widget seperti **page, dialog, snackbar**, dan juga **bottomsheet**\
+Layer Presentation bertanggung jawab terhadap tampilan dan interaksi user, sehingga seluruh komponen di dalamnya harus fokus pada UI dan tidak mengandung business logic.
+## Page
+- Data dari halaman sebelumnya wajib dikirim melalui parameter (constructor/property)\
+  Tidak diperbolehkan menggunakan `Get.parameters`
+- Deklarasi controller dilakukan di dalam Page. Dapat menggunakan `Get.put()` atau `Get.lazyPut()` sesuai kebutuhan\
+**Contoh :**
+``` dart
+class DetailPage extends StatelessWidget {
+    final int id;
+    DetailPage({super.key, required this.id});
+    
+    final DetailController _controller = Get.put(DetailController(id));
+    @override
+    Widget build(BuildContext context) {
+        return Scaffold(
+            body: Container(),
+        );
+    }
+}
+```
+## Widget
+- Widget tidak boleh mengandung business logic
+- Widget hanya bertanggung jawab untuk menampilkan UI
+- Semua logic harus berada di Page atau Controller
+Jenis logic yang tidak boleh ada di **Widget**:
+- Pemanggilan API
+- Proses perhitungan bisnis
+- Pengambilan keputusan kompleks (business rule)
+Widget hanya boleh menerima:
+- Data (melalui parameter)
+- Callback (untuk event seperti onTap, onPressed, dll)
+**Contoh (Yang Tidak Diperbolehkan) ❌**
+``` dart
+class CartItemWidget extends StatelessWidget {
+  final CartRepository repository;
+
+  const CartItemWidget({super.key, required this.repository});
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      onPressed: () async {
+        // ❌ Tidak diperbolehkan (logic di widget)
+        await repository.checkout();
+      },
+      child: const Text('Checkout'),
+    );
+  }
+}
+```
+**Contoh (Yang Disarankan) ✅**
+``` dart
+class CartItemWidget extends StatelessWidget {
+  final VoidCallback onCheckout;
+
+  const CartItemWidget({
+    super.key,
+    required this.onCheckout,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      onPressed: onCheckout,
+      child: const Text('Checkout'),
+    );
+  }
+}
+```
+**Cara Penggunaan ✅**
+``` dart
+CartItemWidget(
+  onCheckout: () async {
+    final result = await _controller.checkout();
+
+    result.match(
+      (error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error)),
+        );
+      },
+      (success) {
+        Navigator.pop(context);
+      },
+    );
+  },
+)
+```
+
+## Dialog
+- Wajib menggunakan dialog berbasis context, contoh `showDialog(...)`
+- Tidak diperbolehkan menggunakan `Get.dialog()` karena tanpa context
+- Dialog tidak boleh mengandung logic, Logic harus berada di Page atau Controller
+- Dialog harus dapat ditutup (dismissible)
+- Dialog tidak boleh dipanggil dari Controller
+
+**Contoh Dialog dengan action dan return data (Tanpa Controller) :**
+``` dart
+Future<String?> showInputDialog(BuildContext context) async {
+  final TextEditingController controller = TextEditingController();
+
+  return await showDialog<String>(
+    context: context,
+    barrierDismissible: false, // supaya tidak bisa klik luar
+    builder: (context) {
+      return AlertDialog(
+        title: const Text('Input Data'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: 'Masukkan sesuatu...',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context, null); // onCancel
+            },
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final value = controller.text.trim();
+
+              if (value.isEmpty) {
+                // bisa kasih validasi ringan
+                return;
+              }
+
+              Navigator.pop(context, value); // onTap / submit
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      );
+    },
+  );
+}
+```
+**✅ Cara Pakai**
+``` dart
+void openDialog(BuildContext context) async {
+  final result = await showInputDialog(context);
+
+  if (result != null) {
+    print('User input: $result'); // onTap
+  } else {
+    print('User cancel'); // onCancel
+  }
+}
+```
+## Bottomsheet
+- Wajib menggunakan dialog berbasis context, Contoh `showDialog(...)`
+- Tidak diperbolehkan menggunakan `Get.dialog()`
+- Dialog tidak boleh mengandung logic, Logic harus berada di Page atau Controller
+- Bottom sheet harus dapat ditutup (dismissible)
+- Diperbolehkan mengembalikan data dari bottom sheet ke Page
+(untuk menjaga logic tetap di luar bottom sheet)
+- Bottom sheet tidak boleh dipanggil dari Controller
+**Contoh Dialog dengan action dan return data (Tanpa Controller) :**
+``` dart
+Future<String?> showStringPickerBottomSheet(
+  BuildContext context,
+  List<String> items,
+) async {
+  return await showModalBottomSheet<String>(
+    context: context,
+    isScrollControlled: true,
+    builder: (context) {
+      return SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header (optional tapi enak buat UX)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'Pilih Item',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+
+            const Divider(height: 1),
+
+            // List item
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: items.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final item = items[index];
+
+                  return ListTile(
+                    title: Text(item),
+                    onTap: () {
+                      Navigator.pop(context, item); // return value
+                    },
+                  );
+                },
+              ),
+            ),
+
+            const Divider(height: 1),
+
+            // Cancel button
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.pop(context, null); // cancel
+                  },
+                  child: const Text('Cancel'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+```
+**✅ Cara Pakai**
+``` dart
+void openBottomSheet(BuildContext context) async {
+  final result = await showStringPickerBottomSheet(
+    context,
+    ['Apple', 'Banana', 'Orange', 'Mango'],
+  );
+
+  if (result != null) {
+    print('Selected: $result');
+  } else {
+    print('User cancelled');
+  }
+}
+```
+## Snackbar
+- Wajib menggunakan snackbar berbasis `context`
+- Tidak diperbolehkan memanggil snackbar dari Controller ❌
+- Hindari snackbar yang menumpuk (multiple trigger dalam waktu singkat) Pastikan ada kontrol terhadap pemanggilannya
+**Contoh pakai package snackbar: `snackify: ^1.2.4`**
+``` dart
+void showCustomSnackbar(BuildContext context) {
+    Snackify.show(
+      context: context,
+      type: SnackType.success,
+      title: Text('Hello !'),
+      subtitle: Text('This is a custom Snackbar.'),
+      ttsConfig: TTSConfiguration(speakOnShow: true),
+      duration: const Duration(seconds: 3),
+      animationDuration: const Duration(milliseconds: 500),
+      backgroundGradient: const LinearGradient(colors: [Colors.teal, Colors.greenAccent]),
+      position: SnackPosition.bottom,
+      persistent: false, // Set to true to keep Snackbar visible until manually dismissed
+    );
+}
+```

@@ -1162,3 +1162,84 @@ void showCustomSnackbar(BuildContext context) {
     );
 }
 ```
+# **List / Collection Manipulation**
+Dalam pengolahan data berbentuk list atau array, disarankan menggunakan functional approach seperti `map()`, `where()`, `fold()`, dan sejenisnya, dibandingkan menggunakan perulangan manual seperti `for` atau `forEach`.\
+**Tujuannya:**
+- Kode lebih ringkas dan mudah dibaca
+- Mengurangi potensi bug (mutable state)
+- Lebih konsisten dengan gaya modern Dart/Flutter
+**Fungsi yang Direkomendasikan**
+- `map()` → transformasi data
+- `where()` → filtering data
+- `fold()` → agregasi (sum, total, dll)
+- `any()` / every() → validasi kondisi
+- `firstWhere()` → pencarian data
+- ## Fold()
+    **❌ Tidak Disarankan (Manual Loop)**
+    ``` dart
+    double total = 0;
+    for (var item in cartItems) {
+        total += item.price;
+    }
+    ```
+    **✅ Disarankan (Functional - fold)**
+    ``` dart
+    double total = 0;
+    final total = cartItems.fold<double>(0, (sum, item) => sum + item.price);
+    ```
+- ## where()
+    **❌ Tidak Disarankan (Manual Filtering)**
+    ``` dart
+    final activeItems = [];
+    for (var item in items) {
+    if (item.isActive) {
+            activeItems.add(item);
+        }
+    }
+    ```
+    **✅ Disarankan (where)**
+    ``` dart
+    final activeItems = items.where((e) => e.isActive).toList();
+    ```
+- ## map()
+    **❌ Tidak Disarankan (Transform Manual)**
+    ``` dart
+    final names = [];
+    for (var item in items) {
+        names.add(item.name);
+    }
+    ```
+    **✅ Disarankan (map)**
+    ``` dart
+    final names = items.map((e) => e.name).toList();
+    ```
+- ## any()
+    **❌ Tidak Disarankan (Manual Loop)**
+    ``` dart
+    bool hasOutOfStock = false;
+    for (var item in cartItems) {
+    if (item.stock == 0) {
+            hasOutOfStock = true;
+            break;
+        }
+    }
+    ```
+    **✅ Disarankan (any())**
+    ``` dart
+    final hasOutOfStock = cartItems.any((e) => e.stock == 0);
+    ```
+- ## firstWhere()
+    **❌ Tidak Disarankan (Manual Loop)**
+    ``` dart
+    CartItemDto? selectedItem;
+    for (var item in cartItems) {
+        if (item.id == 1) {
+            selectedItem = item;
+            break;
+        }
+    }
+    ```
+    **✅ Disarankan any()**
+    ``` dart
+    final selectedItem = cartItems.firstWhere((e) => e.id == 1);
+    ```

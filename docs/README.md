@@ -1243,3 +1243,56 @@ Dalam pengolahan data berbentuk list atau array, disarankan menggunakan function
     ``` dart
     final selectedItem = cartItems.firstWhere((e) => e.id == 1);
     ```
+    
+
+# **Null Safety (Nullable)**
+Penggunaan null safety (`?` dan `!`) harus dilakukan secara ketat dan terkontrol,\
+karena kesalahan penggunaan dapat menyebabkan:
+- Crash (null pointer exception)
+- UI tidak tampil dengan benar (misalnya tampilan kosong/abu-abu)
+- Bug yang sulit dideteksi
+**Prinsip Utama**
+- Hindari penggunaan nullable (`?`) jika tidak diperlukan
+- Gunakan nullable hanya jika data memang memungkinkan null dari API
+- Hindari penggunaan force unwrap (`!`) tanpa validasi ❌
+- ## Nullable (`?`)
+    - Gunakan `?` hanya jika data memang bisa null
+    - Jika data dari API selalu ada, maka tidak boleh nullable
+    ``` dart
+    String? description; // ✅ jika API bisa null
+    @Default('') String name; // ✅ jika API selalu ada
+    ```
+- ## Non-null Assertion (`!`)
+    - Sangat tidak disarankan menggunakan `!` secara langsung
+    - Hanya boleh digunakan jika sudah dipastikan tidak null
+    ❌ Tidak Disarankan
+    ``` dart
+    Text(user.name!) // berisiko crash jika null
+    ```
+    ✅ Disarankan
+    ``` dart
+    if (user.name != null) {
+        Text(user.name!);
+    }
+    ```
+    Atau gunakan default value:
+    ``` dart
+    Text(user.name ?? '-');
+    ```
+- ## Gunakan Default Value
+    - Jika memungkinkan, gunakan default value untuk menghindari nullable
+     ``` dart
+    @Default('') String name,
+    @Default(0) int quantity,
+    @Default(false) bool isActive,
+    ```
+- ## Hindari Nullable Berantai
+    ❌ Tidak Disarankan
+    ``` dart
+    // ❌ Sulit dibaca dan rawan bug
+    user?.profile?.address?.city
+    ```
+    ✅ Gunakan pendekatan yang lebih aman:
+    ``` dart
+    final city = user?.profile?.address?.city ?? '-';
+    ```

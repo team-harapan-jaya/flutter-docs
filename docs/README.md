@@ -989,6 +989,54 @@ CartItemWidget(
   },
 )
 ```
+**Contoh Jika menggunakan Function dan return data✅**
+``` dart
+class CalendarHorizontalWidget extends StatelessWidget {
+  final List<DateTime> dates;
+  final ScrollController? scrollController;
+  final Function(DateTime date)? onDateTap;
+
+  const CalendarHorizontalWidget({
+    super.key,
+    required this.dates,
+    this.scrollController,
+    this.onDateTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      controller: scrollController,
+      scrollDirection: Axis.horizontal,
+      itemCount: dates.length,
+      itemBuilder: (context, index) {
+        final date = dates[index];
+
+        return GestureDetector(
+          onTap: () {
+            onDateTap?.call(date);
+          },
+          child: Container(
+            margin: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(12),
+            child: Text(date.toString()),
+          ),
+        );
+      },
+    );
+  }
+}
+```
+**Cara penggunaan Function dan return data✅**
+``` dart
+return CalendarHorizontalWidget(
+  dates: AttendanceStatic.attendanceCalendarHistory,
+  scrollController: controller.scrollController,
+  onDateTap: (date) {
+    print(date); // atau simpan ke state / kirim ke controller
+  },
+);
+```
 
 ## Dialog
 - Wajib menggunakan dialog berbasis context, contoh `showDialog(...)`
@@ -1295,4 +1343,74 @@ karena kesalahan penggunaan dapat menyebabkan:
     ✅ Gunakan pendekatan yang lebih aman:
     ``` dart
     final city = user?.profile?.address?.city ?? '-';
+    ```
+
+# **Async / Await**
+Penggunaan `async` dan `await` harus dilakukan dengan benar dan konsisten, karena kesalahan dalam penggunaannya dapat menyebabkan:
+- Data tidak sinkron
+- UI tidak ter-update
+- Race condition
+- Bug yang sulit ditelusuri
+**Prinsip Utama**
+- Gunakan `await` untuk proses yang hasilnya dibutuhkan sebelum melanjutkan eksekusi
+- Hindari penggunaan `async` tanpa kebutuhan yang jelas
+- Pastikan alur eksekusi data tetap predictable
+- ## Gunakan await untuk Proses Berantai
+    - Jika hasil dari sebuah fungsi digunakan untuk proses berikutnya, maka wajib menggunakan `await`\
+    ❌ Tidak Disarankan
+    ``` dart
+    void submitOrder() {
+        repository.createOrder(); // tidak di-await
+        print("Order submitted"); // bisa jalan duluan
+    }
+    ```
+    ✅ Disarankan
+    ``` dart
+    Future<void> submitOrder() async {
+        await repository.createOrder();
+
+        print("Order submitted");
+    }
+    ```
+- ## Hindari `async` Tanpa `await`
+    - Jangan menambahkan `async` jika tidak ada proses asynchronous di dalamnya.\
+    ❌ Tidak Disarankan
+    ``` dart
+    Future<void> getData() async {
+        print("No async process here");
+    }
+    ```
+    ✅ Disarankan
+    ``` dart
+    void getData() {
+        print("No async process here");
+    }
+    ```
+- ## Gunakan `Future` sebagai Return Type
+    - Fungsi asynchronous harus memiliki return type yang jelas `(Future<T>)`\
+    ❌ Tidak Disarankan
+    ``` dart
+    submitOrder() async {
+        await repository.createOrder();
+    }
+    ```
+    ✅ Disarankan
+    ``` dart
+    Future<void> submitOrder() async {
+        await repository.createOrder();
+    }
+    ```
+- ## Perhatikan Parallel vs Sequential
+    - Gunakan `await` jika proses harus berurutan, dan hindari jika bisa dijalankan paralel.\
+    Sequential (Berurutan)
+    ``` dart
+    await getUser();
+    await getOrders();
+    ```
+    Parallel (Bersamaan)
+    ``` dart
+    await Future.wait([
+        getUser(),
+        getOrders(),
+    ]);
     ```

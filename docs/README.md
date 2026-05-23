@@ -921,6 +921,14 @@ class DetailPage extends StatelessWidget {
     }
 }
 ```
+**Penggunaan**
+``` dart
+Get.to(() => DetailPage(id : 1));
+```
+**Kurang sesuai ❌**
+``` dart
+Get.toNamed(RouteName.detail, parameters: {"id": 1});
+```
 ## Widget
 - Widget tidak boleh mengandung business logic
 - Widget hanya bertanggung jawab untuk menampilkan UI
@@ -1414,3 +1422,86 @@ Penggunaan `async` dan `await` harus dilakukan dengan benar dan konsisten, karen
         getOrders(),
     ]);
     ```
+
+
+# **Local Storage**
+Penggunaan local storage harus dilakukan secara terstruktur dan tidak boleh diakses secara langsung dari layer selain Infrastructure.
+Semua akses ke storage wajib melalui service/repository yang reusable.\
+**Prinsip Utama**
+- Tidak boleh mengakses storage secara langsung di Page, Controller, atau Widget
+- Semua operasi (read, write, delete) harus melalui service khusus
+- Data yang disimpan dan diambil harus menggunakan DTO
+- Hindari penggunaan `dynamic` atau `Map<String, dynamic>` secara langsung
+- ## Tidak Diperbolehkan (Direct Access)
+    ❌ Tidak Diperbolehkan (Direct Access)
+    ``` dart
+    var priceListLocalData = GetStorage().read(StorageKey.priceList);
+    ```
+    **Masalah:**
+    - Tidak reusable
+    - Sulit di-maintain
+    - Tidak ada type safety
+    - Menyebar ke banyak tempat
+- ## Disarankan (Menggunakan Service)
+    Gunakan service khusus untuk mengelola local storage.
+    **Contoh :**
+    ``` dart
+    class NewsLocalService {
+        final FlutterSecureStorage _storage;
+        const NewsLocalService(this._storage);
+
+        Future<List<NewsReadDto>> readNewsList() async {
+            try {
+                final resultLocal = await _storage.read(
+                    key: NewsLocalServiceKey.newsListKey,
+                );
+
+                if (resultLocal == null || resultLocal.isEmpty) {
+                    return [];
+                }
+
+                final List<dynamic> jsonDynamic = jsonDecode(resultLocal);
+
+                return jsonDynamic
+                    .map((e) => NewsReadDto.fromJson(e as Map<String, dynamic>))
+                    .toList();
+            } catch (e) {
+                Debug.logging(
+                    interface: "NewsLocalService",
+                    data: "Error readNewsList: $e",
+                );
+                return [];
+            }
+        }
+
+        Future<void> saveNewsList(List<NewsReadDto> data) async {
+            try {
+                final jsonString = jsonEncode(
+                    data.map((e) => e.toJson()).toList(),
+                );
+
+                await _storage.write(
+                    key: NewsLocalServiceKey.newsListKey,
+                    value: jsonString,
+                );
+            } catch (e) {
+                Debug.logging(
+                    interface: "NewsLocalService",
+                    data: "Error saveNewsList: $e",
+                );
+            }
+        }
+
+        Future<void> deleteNewsList() async {
+            await _storage.delete(
+                key: NewsLocalServiceKey.newsListKey,
+            );
+        }
+    }
+    ```
+    **Kelebihan Pendekatan Ini**
+    - ✅ Reusable (bisa dipakai di banyak tempat)
+    - ✅ Type-safe (menggunakan DTO)
+    - ✅ Mudah di-maintain
+    - ✅ Terpusat (single source of truth)
+    - ✅ Konsisten dengan arsitektur (DDD)

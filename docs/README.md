@@ -1505,3 +1505,5 @@ Semua akses ke storage wajib melalui service/repository yang reusable.\
     - ✅ Mudah di-maintain
     - ✅ Terpusat (single source of truth)
     - ✅ Konsisten dengan arsitektur (DDD)
+- ## Contoh lebih expert menggunakan database configuration sendiri.
+    Untuk ini dapat dilihat pada link [Berikut](ls-ef.md)
